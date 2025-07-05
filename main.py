@@ -22,6 +22,7 @@ class SageScriptApp:
         self.CHROMA_PATH = "chroma_db"
         self.EMBEDDING_MODEL = "nomic-embed-text"
         self.LLM_MODEL = "stable-code:3b"
+        self.MULTIMODAL_MODEL = "llava:7b-v1.6-mistral-q3_K_M" # <-- NEW
 
         # --- Services ---
         self.console = Console()
@@ -47,9 +48,39 @@ class SageScriptApp:
         )
         self.console.print(menu)
 
+    def _run_generate_from_image(self):
+        """Handles the 'Generate Code from Image' sub-workflow."""
+        self.console.rule("[bold magenta]GENERATE FROM ARCHITECTURE IMAGE[/bold magenta]")
+        while True:
+            image_path = Prompt.ask("[cyan]Enter the path to the architecture diagram/image[/cyan]")
+            if os.path.isfile(image_path):
+                break
+            self.console.print(f"[bold red]Error:[/bold red] File not found at '{image_path}'. Please try again.")
+        
+        prompt = Prompt.ask("[cyan]Enter a description for the code to generate (e.g., 'Implement this in Python')")
+        
+        with self.console.status("[yellow]🧠 Analyzing image and generating code...[/yellow]"):
+            generated_code = self.llm_service.generate_code_from_image(
+                user_prompt=prompt,
+                image_path=image_path,
+                model_name=self.MULTIMODAL_MODEL
+            )
+
+        display_code(generated_code)
+        save_code_to_file(generated_code)
+
     def run_generate(self):
-        """Handles the 'Generate Code' workflow."""
+        """Handles the 'Generate Code' workflow, offering text or image input."""
         self.console.rule("[bold green]GENERATE CODE[/bold green]")
+
+        # Ask user for generation type
+        use_image = Confirm.ask("\n[bold]Do you want to generate code from an architecture diagram/image?[/bold]", default=False)
+        
+        if use_image:
+            self._run_generate_from_image()
+            return
+
+        # --- Existing text-based generation flow ---
         prompt = Prompt.ask("[cyan]Enter the description of the code you want to generate[/cyan]")
         context_files = IntPrompt.ask("[cyan]How many relevant examples should I use for context?[/cyan]", default=5)
 
