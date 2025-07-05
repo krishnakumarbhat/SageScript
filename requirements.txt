@@ -1,0 +1,6 @@
+# requirements.txt
+langchain-community
+ollama
+chromadb
+rich
+typer[all]
