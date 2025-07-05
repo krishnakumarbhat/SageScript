@@ -45,31 +45,36 @@ class ChromaDBManager:
         console.print(f"[green]✅ Split into {len(chunks)} chunks. Generating embeddings and adding to '[bold]{collection_name}[/bold]'...[/green]")
 
         self.vector_store.add_documents(documents=chunks, collection_name=collection_name)
-        # Note: In newer versions of Chroma, persistence is handled automatically.
-        # self.vector_store.persist() is deprecated/removed. The client handles it.
-
         console.print(f"\n[bold green]✅ Indexing complete![/bold green] Added {len(chunks)} document chunks to the database.")
 
     def query_collection(self, collection_name: str, query: str, n_results: int) -> str:
         """Queries a collection and returns a formatted context string."""
         try:
-            # Use the collection-aware retriever
             retriever = self.vector_store.as_retriever(
                 search_kwargs={"k": n_results},
-                collection_name=collection_name
+                # Note: The `collection_name` argument is not a standard part of `as_retriever`.
+                # Chroma's retriever will search all collections unless the store is initialized
+                # with a specific collection name. A better approach for multi-collection is
+                # to get the collection object first. However, for this setup, we rely on the
+                # embedding search to span across data added with different collection names.
+                # To be more precise, you would use:
+                # self.vector_store.get(collection_name=collection_name).similarity_search(...)
+                # but for LangChain's retriever interface, this works generally.
             )
-            retrieved_docs = retriever.invoke(query)
+            
+            # To specifically query one collection, we need to manually use the Chroma client
+            # The Langchain retriever wrapper isn't great for multiple collections. Let's do it right:
+            docs = self.vector_store.similarity_search(query, k=n_results, collection_name=collection_name)
 
-            if not retrieved_docs:
+            if not docs:
                 return ""
 
             context_pieces = []
-            for doc in retrieved_docs:
+            for doc in docs:
                 file_path = doc.metadata.get('source', 'Unknown File')
                 context_pieces.append(f"--- From: {file_path} ---\n{doc.page_content}")
             return "\n\n".join(context_pieces)
 
         except Exception as e:
-            # ChromaDB might raise an exception if the collection doesn't exist.
-            console.print(f"[yellow]⚠️ Could not query collection '{collection_name}'. It might be empty. Error: {e}[/yellow]")
+            console.print(f"[yellow]⚠️ Could not query collection '{collection_name}'. It might be empty or not exist. Error: {e}[/yellow]")
             return ""
