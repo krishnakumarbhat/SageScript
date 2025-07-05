@@ -44,3 +44,16 @@ Respond ONLY with the code inside a single markdown block.
 
 User Request: {user_prompt}
 """
+
+
+MULTIMODAL_CODE_PROMPT_TEMPLATE = """
+You are an expert programmer specializing in turning software architecture diagrams and mockups into code.
+Analyze the attached image, which could be a flowchart, UML diagram, wireframe, or whiteboard sketch.
+
+Based on your analysis of the visual information in the image and the user's specific request below, write a complete and functional code implementation.
+The code should accurately reflect the logic, components, and relationships shown in the diagram.
+
+User Request: {user_prompt}
+
+Respond ONLY with the code inside a single markdown block. Do not add any explanation, preamble, or conclusion.
+"""

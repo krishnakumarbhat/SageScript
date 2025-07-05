@@ -4,8 +4,8 @@ from ollama import ResponseError
 from requests.exceptions import ConnectionError
 from rich.console import Console
 
-# Import the templates from their dedicated file
-from .prompts import GENERATE_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, IMAGE_PROMPT_TEMPLATE
+# Import the new template
+from .prompts import GENERATE_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, MULTIMODAL_CODE_PROMPT_TEMPLATE
 
 
 class LLMService:
@@ -113,15 +113,29 @@ class LLMService:
         Returns:
             str: The generated code, cleaned and ready to use.
         """
-        full_prompt = IMAGE_PROMPT_TEMPLATE.format(user_prompt=user_prompt)
-        
-        self.console.print(f"[yellow]🧠 Generating code using [bold]{model_name}[/bold]...[/yellow]")
-        raw_response = self._invoke_llm(
-            prompt=full_prompt, 
-            model=model_name, 
-            images=[image_path]
-        )
-        return self._clean_code_output(raw_response)
+        full_prompt = MULTIMODAL_CODE_PROMPT_TEMPLATE.format(user_prompt=user_prompt)
+
+        try:
+            # Using ollama.chat as shown in your script is the correct modern approach
+            response = ollama.chat(
+                model=model_name,
+                messages=[
+                    {
+                        'role': 'user',
+                        'content': full_prompt,
+                        'images': [image_path] # The library handles the image encoding
+                    }
+                ]
+            )
+            raw_response = response['message']['content']
+            return self._clean_code_output(raw_response)
+        except ResponseError as e:
+            self.console.print(f"\n[bold red]Ollama API Error:[/bold red] {e.error}")
+            self.console.print(f"Please make sure you have pulled the model with: 'ollama pull {model_name}'.")
+            raise SystemExit(1)
+        except Exception as e:
+            self.console.print(f"\n[bold red]An unexpected error occurred:[/bold red] {e}")
+            raise SystemExit(1)
 
     def generate_review(self, code_to_review: str, context: str) -> str:
         """
