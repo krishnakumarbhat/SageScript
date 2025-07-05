@@ -44,3 +44,35 @@ Respond ONLY with the code inside a single markdown block.
 
 User Request: {user_prompt}
 """
+
+
+IMAGE_TEXT_PROMPT_TEMPLATE = """
+You are an expert programmer. The user has provided text that was automatically extracted from an image using an OCR tool.
+This text might represent code, a diagram's labels, or a user interface. It may be unstructured or have OCR errors.
+Your task is to interpret this text, understand the user's intent, and write a complete and functional code implementation.
+
+--- TEXT EXTRACTED FROM IMAGE ---
+{image_text}
+--- END OF EXTRACTED TEXT ---
+
+Based on the extracted text and the user's request, generate the code.
+Respond ONLY with the code inside a single markdown block. Do not add any explanation.
+
+User Request: {user_prompt}
+"""
+
+
+STRUCTURED_IMAGE_DATA_PROMPT_TEMPLATE = """
+You are an expert programmer. The user has provided structured key-value data that was extracted from an image.
+This data represents elements like form fields, button labels, titles, or schema definitions.
+Your task is to interpret this structured data and write a complete and functional code implementation based on the user's request.
+
+--- STRUCTURED DATA EXTRACTED FROM IMAGE ---
+{structured_data}
+--- END OF EXTRACTED DATA ---
+
+Based on the structured data and the user's request below, generate the code.
+Respond ONLY with the code inside a single markdown block. Do not add any explanation.
+
+User Request: {user_prompt}
+"""

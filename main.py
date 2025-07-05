@@ -9,7 +9,7 @@ from rich.text import Text
 from cli.db_manager import ChromaDBManager, PRACTICES_COLLECTION, BAD_PRACTICES_COLLECTION
 from cli.llm_service import LLMService
 from cli.utils import display_header, save_code_to_file, display_code, display_review
-
+from cli.image_service import ImageService
 
 class SageScriptApp:
     """
@@ -22,7 +22,8 @@ class SageScriptApp:
         self.CHROMA_PATH = "chroma_db"
         self.EMBEDDING_MODEL = "nomic-embed-text"
         self.LLM_MODEL = "stable-code:3b"
-        self.MULTIMODAL_MODEL = "llava:7b-v1.6-mistral-q3_K_M" # <-- NEW
+        # Get your free key from https://app.jigsawstack.com/dashboard
+        self.JIGSAW_API_KEY = "sk_4ee413bb647169fe504ec9fe92cfde10f4500a0c07ab69a013e49a67f83a523bf1af7130b08cf53e0f037337ed358990d21f6d7ec36cd8d749e007597a3b31a0024RxlLpyTuFb98jXTqSp" # <-- PASTE YOUR KEY HERE
 
         # --- Services ---
         self.console = Console()
@@ -31,6 +32,7 @@ class SageScriptApp:
             embedding_model_name=self.EMBEDDING_MODEL
         )
         self.llm_service = LLMService(model_name=self.LLM_MODEL)
+        self.image_service = ImageService(api_key=self.JIGSAW_API_KEY) # <-- NEW
 
     def display_main_menu(self):
         """Displays the main menu of the application."""
@@ -42,28 +44,88 @@ class SageScriptApp:
                 "[bold blue]3.[/bold blue] Index a Directory\n\n"
                 "[bold red]4.[/bold red] Exit"
             ),
-            title="Main Menu",
-            border_style="magenta",
-            expand=False
+            title="Main Menu", border_style="magenta", expand=False
         )
         self.console.print(menu)
+    
+    # def _run_generate_from_image(self):
+    #     """Handles the 'Generate Code from Image' workflow using the JigsawStack pipeline."""
+    #     self.console.rule("[bold magenta]GENERATE FROM IMAGE (via Text Extraction)[/bold magenta]")
+    #     while True:
+    #         image_path = Prompt.ask("[cyan]Enter the path to the image[/cyan]")
+    #         if os.path.isfile(image_path):
+    #             break
+    #         self.console.print(f"[bold red]Error:[/bold red] File not found at '{image_path}'. Please try again.")
+        
+    #     # Step 1: Extract text from the image
+    #     with self.console.status("[yellow]🔍 Extracting text from image via JigsawStack...[/yellow]"):
+    #         extracted_text = self.image_service.extract_text_from_image(image_path)
+        
+    #     if not extracted_text:
+    #         self.console.print("[bold red]Could not extract text from the image. Aborting.[/bold red]")
+    #         return
+            
+    #     self.console.print("[green]✅ Text extracted successfully![/green]")
+    #     self.console.print(Panel(extracted_text, title="Extracted Text", border_style="cyan"))
 
+    #     # Step 2: Generate code from the extracted text
+    #     prompt = Prompt.ask("\n[cyan]Enter a description for the code to generate (e.g., 'Implement this in Python')")
+
+    #     with self.console.status("[yellow]🧠 Generating code using extracted text...[/yellow]"):
+    #         generated_code = self.llm_service.generate_code_from_image_text(
+    #             user_prompt=prompt,
+    #             image_text=extracted_text
+    #         )
+
+    #     display_code(generated_code)
+    #     save_code_to_file(generated_code)
+    
     def _run_generate_from_image(self):
-        """Handles the 'Generate Code from Image' sub-workflow."""
-        self.console.rule("[bold magenta]GENERATE FROM ARCHITECTURE IMAGE[/bold magenta]")
+        """Handles the 'Generate Code from Image' workflow using the JigsawStack vOCR pipeline."""
+        self.console.rule("[bold magenta]GENERATE FROM IMAGE (via Structured Extraction)[/bold magenta]")
         while True:
-            image_path = Prompt.ask("[cyan]Enter the path to the architecture diagram/image[/cyan]")
+            image_path = Prompt.ask("[cyan]Enter the path to the image[/cyan]")
             if os.path.isfile(image_path):
                 break
             self.console.print(f"[bold red]Error:[/bold red] File not found at '{image_path}'. Please try again.")
+
+        # --- NEW: Ask the user what to extract ---
+        self.console.print("\n[bold]What specific fields do you want to extract from the image?[/bold]")
+        self.console.print(" (e.g., 'username_field', 'password_field', 'submit_button_text')")
+        self.console.print("Press Enter on an empty line when you are done.")
         
-        prompt = Prompt.ask("[cyan]Enter a description for the code to generate (e.g., 'Implement this in Python')")
+        extraction_prompts = []
+        while True:
+            item = Prompt.ask("[cyan]  -> Field to extract[/cyan]", default="")
+            if not item:
+                break
+            extraction_prompts.append(item.strip())
         
-        with self.console.status("[yellow]🧠 Analyzing image and generating code...[/yellow]"):
-            generated_code = self.llm_service.generate_code_from_image(
-                user_prompt=prompt,
+        if not extraction_prompts:
+            self.console.print("[bold red]No fields were provided to extract. Aborting.[/bold red]")
+            return
+
+        # Step 1: Extract structured data from the image
+        with self.console.status("[yellow]🔍 Extracting structured data from image...[/yellow]"):
+            structured_data = self.image_service.extract_structured_data_from_image(
                 image_path=image_path,
-                model_name=self.MULTIMODAL_MODEL
+                extraction_prompts=extraction_prompts
+            )
+
+        if not structured_data:
+            self.console.print("[bold red]Could not extract data from the image. Aborting.[/bold red]")
+            return
+
+        self.console.print("\n[green]✅ Data extracted successfully![/green]")
+        self.console.print(Panel(structured_data, title="Extracted Key-Value Data", border_style="cyan"))
+
+        # Step 2: Generate code from the structured data
+        prompt = Prompt.ask("\n[cyan]Enter a final prompt for the code generator (e.g., 'Create an HTML form with this')")
+
+        with self.console.status("[yellow]🧠 Generating code using extracted data...[/yellow]"):
+            generated_code = self.llm_service.generate_code_from_structured_data(
+                user_prompt=prompt,
+                structured_data=structured_data
             )
 
         display_code(generated_code)
@@ -74,7 +136,7 @@ class SageScriptApp:
         self.console.rule("[bold green]GENERATE CODE[/bold green]")
 
         # Ask user for generation type
-        use_image = Confirm.ask("\n[bold]Do you want to generate code from an architecture diagram/image?[/bold]", default=False)
+        use_image = Confirm.ask("\n[bold]Do you want to generate code from an image?[/bold]", default=False)
         
         if use_image:
             self._run_generate_from_image()

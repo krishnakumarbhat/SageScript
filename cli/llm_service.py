@@ -5,7 +5,7 @@ from requests.exceptions import ConnectionError
 from rich.console import Console
 
 # Import the templates from their dedicated file
-from .prompts import GENERATE_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, IMAGE_PROMPT_TEMPLATE
+from .prompts import GENERATE_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, IMAGE_PROMPT_TEMPLATE ,IMAGE_TEXT_PROMPT_TEMPLATE ,STRUCTURED_IMAGE_DATA_PROMPT_TEMPLATE
 
 
 class LLMService:
@@ -39,8 +39,7 @@ class LLMService:
             SystemExit: If a connection to Ollama fails or the model causes an error.
         """
         try:
-            # Pass images to the generate call if they exist
-            response = ollama.generate(model=model, prompt=prompt, images=images or [], stream=False)
+            response = ollama.generate(model=self.model, prompt=prompt, stream=False)
             return response.get('response', '')
         except ConnectionError:
             self.console.print("\n[bold red]Connection Error:[/bold red] Could not connect to Ollama.")
@@ -48,7 +47,7 @@ class LLMService:
             raise SystemExit(1)
         except ResponseError as e:
             self.console.print(f"\n[bold red]Ollama API Error:[/bold red] {e.error}")
-            self.console.print(f"This might mean the model '{model}' is not available. Please pull it with 'ollama pull {model}'.")
+            self.console.print(f"This might mean the model '{self.model}' is not available. Please pull it with 'ollama pull {self.model}'.")
             raise SystemExit(1)
         except Exception as e:
             self.console.print(f"\n[bold red]An unexpected error occurred:[/bold red] {e}")
@@ -97,47 +96,51 @@ class LLMService:
             context=context or "No context provided.",
             user_prompt=user_prompt
         )
-        # Use the default text model for this call
-        raw_response = self._invoke_llm(full_prompt, model=self.model)
+        raw_response = self._invoke_llm(full_prompt)
         return self._clean_code_output(raw_response)
-        
-    def generate_code_from_image(self, user_prompt: str, image_path: str, model_name: str) -> str:
+
+    def generate_code_from_structured_data(self, user_prompt: str, structured_data: str) -> str:
         """
-        Generates code based on a user prompt and an architecture/diagram image.
+        Generates code based on a text prompt and structured data from an image.
 
         Args:
             user_prompt (str): The user's text request accompanying the image.
-            image_path (str): The file path to the image.
-            model_name (str): The name of the multimodal model to use (e.g., 'llava').
+            structured_data (str): The key-value data extracted by the vOCR service.
 
         Returns:
             str: The generated code, cleaned and ready to use.
         """
-        full_prompt = IMAGE_PROMPT_TEMPLATE.format(user_prompt=user_prompt)
-        
-        self.console.print(f"[yellow]🧠 Generating code using [bold]{model_name}[/bold]...[/yellow]")
-        raw_response = self._invoke_llm(
-            prompt=full_prompt, 
-            model=model_name, 
-            images=[image_path]
+        full_prompt = STRUCTURED_IMAGE_DATA_PROMPT_TEMPLATE.format(
+            user_prompt=user_prompt,
+            structured_data=structured_data
         )
+        raw_response = self._invoke_llm(full_prompt)
         return self._clean_code_output(raw_response)
 
+    # # NEW method for the pipeline
+    # def generate_code_from_image_text(self, user_prompt: str, image_text: str) -> str:
+    #     """
+    #     Generates code based on a text prompt and text extracted from an image.
+
+    #     Args:
+    #         user_prompt (str): The user's text request accompanying the image.
+    #         image_text (str): The text extracted by the OCR service.
+
+    #     Returns:
+    #         str: The generated code, cleaned and ready to use.
+    #     """
+    #     full_prompt = IMAGE_TEXT_PROMPT_TEMPLATE.format(
+    #         user_prompt=user_prompt,
+    #         image_text=image_text
+    #     )
+    #     raw_response = self._invoke_llm(full_prompt)
+    #     return self._clean_code_output(raw_response)
+
     def generate_review(self, code_to_review: str, context: str) -> str:
-        """
-        Generates a code review based on the user's code and 'bad practices' context.
-
-        Args:
-            code_to_review (str): The code submitted by the user for review.
-            context (str): Relevant examples of bad practices to look for.
-
-        Returns:
-            str: A markdown-formatted string containing the code review.
-        """
+        # ... same as before ...
         full_prompt = REVIEW_PROMPT_TEMPLATE.format(
             context=context or "No bad practice examples provided.",
             code_to_review=code_to_review
         )
-        # Use the default text model for this call
-        review_text = self._invoke_llm(full_prompt, model=self.model)
+        review_text = self._invoke_llm(full_prompt)
         return review_text.strip()
