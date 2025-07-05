@@ -1,54 +1,19 @@
-"""
-file_handler.py
+# good_practice_5.py
 
-Functions to handle file read and write operations safely.
-"""
-
-from typing import List
-
-
-def read_lines(filepath: str) -> List[str]:
-    """
-    Read all lines from a file.
-
-    Args:
-        filepath: Path to the file.
-
-    Returns:
-        List of lines read from the file.
-    """
+def get_age_from_dict(data: dict, key: str) -> int:
+    """Safely retrieves and converts an age from a dictionary."""
     try:
-        with open(filepath, 'r', encoding='utf-8') as file:
-            lines = file.readlines()
-        return [line.strip() for line in lines]
-    except FileNotFoundError:
-        print(f"File not found: {filepath}")
-        return []
-    except IOError as error:
-        print(f"IO error while reading file: {error}")
-        return []
+        age_str = data[key]
+        return int(age_str)
+    except KeyError:
+        print(f"Error: The key '{key}' was not found in the dictionary.")
+        return -1
+    except (ValueError, TypeError):
+        print(f"Error: The value for '{key}' ('{age_str}') is not a valid integer.")
+        return -1
 
-
-def write_lines(filepath: str, lines: List[str]) -> None:
-    """
-    Write a list of lines to a file.
-
-    Args:
-        filepath: Path to the file.
-        lines: List of strings to write.
-    """
-    try:
-        with open(filepath, 'w', encoding='utf-8') as file:
-            for line in lines:
-                file.write(f"{line}\n")
-    except IOError as error:
-        print(f"IO error while writing file: {error}")
-
-
-if __name__ == "__main__":
-    sample_lines = ["Line 1", "Line 2", "Line 3"]
-    write_lines("sample.txt", sample_lines)
-    read_content = read_lines("sample.txt")
-    print("Read from file:")
-    for line in read_content:
-        print(line)
+# Example usage:
+user_data = {"name": "John", "age": "30"}
+print(get_age_from_dict(user_data, "age"))      # Success
+print(get_age_from_dict(user_data, "city"))     # KeyError
+print(get_age_from_dict({"age": "thirty"}, "age")) # ValueError

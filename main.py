@@ -103,13 +103,21 @@ class SageScriptApp:
                 break
             self.console.print(f"[bold red]Error:[/bold red] Directory not found at '{dir_path}'. Please try again.")
 
+        collection = ""
         while True:
-            collection = Prompt.ask(
-                f"[cyan]Which collection should this code go into? ([/cyan][bold green]{PRACTICES_COLLECTION}[/bold green][cyan]/[/cyan][bold yellow]{BAD_PRACTICES_COLLECTION}[/bold yellow][cyan])[/cyan]"
+            choice = Prompt.ask(
+                "[cyan]Is this code a [bold green]good[/bold green] practice or a [bold yellow]bad[/bold yellow] practice?[/cyan] ([green]good[/green]/[yellow]bad[/yellow])"
             ).lower()
-            if collection in [PRACTICES_COLLECTION, BAD_PRACTICES_COLLECTION]:
+
+            if choice == 'good':
+                collection = PRACTICES_COLLECTION
                 break
-            self.console.print("[bold red]Invalid choice.[/bold red] Please enter 'practices' or 'bad_practices'.")
+            elif choice == 'bad':
+                collection = BAD_PRACTICES_COLLECTION
+                break
+            else:
+                self.console.print("[bold red]Invalid choice.[/bold red] Please enter 'good' or 'bad'.")
+        # --- END OF MODIFIED BLOCK ---
 
         self.console.print(Panel(
             f"Indexing files from [cyan]'{dir_path}'[/cyan] into the [bold green]'{collection}'[/bold green] collection.",

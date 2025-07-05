@@ -1,45 +1,14 @@
-"""
-calculator.py
+# good_practice_2.py
 
-A simple calculator module demonstrating professional Python coding practices.
-"""
-
-from typing import Union
-
-
-def add(a: Union[int, float], b: Union[int, float]) -> Union[int, float]:
-    """Return the sum of two numbers."""
-    return a + b
-
-
-def subtract(a: Union[int, float], b: Union[int, float]) -> Union[int, float]:
-    """Return the difference of two numbers."""
-    return a - b
-
-
-def multiply(a: Union[int, float], b: Union[int, float]) -> Union[int, float]:
-    """Return the product of two numbers."""
-    return a * b
-
-
-def divide(a: Union[int, float], b: Union[int, float]) -> Union[float, None]:
-    """
-    Return the division of two numbers.
-    
-    Raises:
-        ValueError: If the divisor is zero.
-    """
-    if b == 0:
-        raise ValueError("Cannot divide by zero.")
-    return a / b
-
-
-if __name__ == "__main__":
-    # Example usage
+def write_greetings(file_path: str, names: list):
+    """Writes a greeting for each name to a file."""
     try:
-        print(f"10 + 5 = {add(10, 5)}")
-        print(f"10 - 5 = {subtract(10, 5)}")
-        print(f"10 * 5 = {multiply(10, 5)}")
-        print(f"10 / 5 = {divide(10, 5)}")
-    except ValueError as error:
-        print(f"Error: {error}")
+        with open(file_path, 'w') as f:
+            for name in names:
+                f.write(f"Hello, {name}!\n")
+        print(f"Successfully wrote greetings to {file_path}")
+    except IOError as e:
+        print(f"Error writing to file {file_path}: {e}")
+
+# Example usage:
+write_greetings('greetings.txt', ['Alice', 'Bob', 'Charlie'])

@@ -18,6 +18,7 @@ class ChromaDBManager:
     def __init__(self, path: str, embedding_model_name: str):
         self.path = path
         self.embedding_function = OllamaEmbeddings(model=embedding_model_name, show_progress=True)
+        # This is our general store object, we will create specific ones for queries.
         self.vector_store = Chroma(
             persist_directory=self.path,
             embedding_function=self.embedding_function
@@ -48,23 +49,19 @@ class ChromaDBManager:
         console.print(f"\n[bold green]✅ Indexing complete![/bold green] Added {len(chunks)} document chunks to the database.")
 
     def query_collection(self, collection_name: str, query: str, n_results: int) -> str:
-        """Queries a collection and returns a formatted context string."""
+        """Queries a specific collection and returns a formatted context string."""
         try:
-            retriever = self.vector_store.as_retriever(
-                search_kwargs={"k": n_results},
-                # Note: The `collection_name` argument is not a standard part of `as_retriever`.
-                # Chroma's retriever will search all collections unless the store is initialized
-                # with a specific collection name. A better approach for multi-collection is
-                # to get the collection object first. However, for this setup, we rely on the
-                # embedding search to span across data added with different collection names.
-                # To be more precise, you would use:
-                # self.vector_store.get(collection_name=collection_name).similarity_search(...)
-                # but for LangChain's retriever interface, this works generally.
+            # --- THIS IS THE CORRECTED LOGIC ---
+            # To query a specific collection, we instantiate a Chroma object for it.
+            collection_store = Chroma(
+                persist_directory=self.path,
+                embedding_function=self.embedding_function,
+                collection_name=collection_name
             )
             
-            # To specifically query one collection, we need to manually use the Chroma client
-            # The Langchain retriever wrapper isn't great for multiple collections. Let's do it right:
-            docs = self.vector_store.similarity_search(query, k=n_results, collection_name=collection_name)
+            # Now, similarity_search is called on the collection-specific store, without the invalid argument.
+            docs = collection_store.similarity_search(query, k=n_results)
+            # --- END OF CORRECTION ---
 
             if not docs:
                 return ""

@@ -1,0 +1,53 @@
+##########################################
+#  Python Good Practice Guideline Rules  #
+##########################################
+
+This file summarizes key rules for writing clean, readable, and robust Python code.
+
+---
+
+### Rule 1: Use Descriptive Names and Type Hints for Clarity
+
+Your code should be as self-documenting as possible.
+
+- **Variable/Function Names:** Names should clearly state their purpose (e.g., `user_name`, `calculate_tax` instead of `un`, `calc`).
+- **Type Hints:** Use type hints (`name: str`, `prices: List[float]`, `-> bool`) to specify what kind of data your functions expect and return. This helps static analysis tools and improves readability.
+- **Docstrings:** Use docstrings for modules, classes, and functions to explain their purpose, arguments, and return values.
+
+---
+
+### Rule 2: Use Context Managers (`with` statement) for Resources
+
+Ensure that resources like files, network connections, or database sessions are always properly closed.
+
+- The `with open(...) as f:` syntax guarantees that `f.close()` is called, even if errors occur inside the block.
+- This prevents resource leaks and data corruption.
+
+---
+
+### Rule 3: Prefer Pythonic Idioms like Comprehensions
+
+Write code in a way that is natural to the Python language.
+
+- **Comprehensions:** Use list, dict, or set comprehensions for creating collections from iterables. They are more concise and often faster than manual `for` loops.
+- **`enumerate`:** Use `for index, value in enumerate(my_list):` instead of managing a manual counter (`i = 0; ...; i += 1`).
+- **Dictionary `get()`:** Use `my_dict.get('key', default_value)` for safe lookups that avoid `KeyError`.
+
+---
+
+### Rule 4: Protect Your Script's Entry Point with `if __name__ == '__main__'`
+
+Make your code reusable and import-safe.
+
+- Any code that should run ONLY when the file is executed directly (not when imported) must be placed inside an `if __name__ == '__main__':` block.
+- This allows other scripts to import your functions and classes without running your test code or main application logic.
+
+---
+
+### Rule 5: Be Specific When Handling Exceptions
+
+Avoid hiding bugs by being too broad with your `try...except` blocks.
+
+- **Catch Specific Exceptions:** Instead of `except Exception:`, catch the specific errors you anticipate, like `except ValueError:`, `except KeyError:`, or `except FileNotFoundError:`.
+- **Multiple Exceptions:** You can catch multiple specific exceptions in a single block using a tuple: `except (ValueError, TypeError):`.
+- **Avoid Bare `except:`:** A bare `except:` clause is even worse than `except Exception:`, as it catches system-exiting exceptions. Never use it unless you have a very specific reason.
