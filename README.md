@@ -84,3 +84,14 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Ollama](https://ollama.ai/) for the local LLM capabilities
 - [ChromaDB](https://www.trychroma.com/) for vector storage
 - [Rich](https://rich.readthedocs.io/) for beautiful CLI formatting
+
+
+
+need to add music maker 
+\
+Librosa	Beat detection, feature extraction	Easy to use, well-documented
+Aubio	Onset/beat detection, pitch tracking	Real-time support
+Essentia	Instrument recognition, feature extraction	Advanced, C++ core with Python bindings
+pyAudioAnalysis	Feature extraction, classification	General audio analysis
+Spleeter	Source separation (vocals/instruments)	Useful for isolating instrument tracks
+
