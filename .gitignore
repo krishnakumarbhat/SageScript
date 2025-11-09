@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Environments
+.venv/
+venv/
+.env
+.env.*
+
+# IDE / Editor
+.idea/
+# Keep VS Code settings if you want, otherwise uncomment next line
+#.vscode/
+
+# Caches / Logs
+.pytest_cache/
+.mypy_cache/
+.cache/
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project data
+chroma_db/
+# If these contain large local samples, ignore them. Remove if you want to commit samples.
+# db/bad_codes/
+# db/good_codes/
+# db/music/

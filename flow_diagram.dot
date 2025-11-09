@@ -1,0 +1,90 @@
+digraph SageScript {
+    rankdir=TB;
+    node [shape=box, style=filled, fillcolor=lightblue, fontname="Arial"];
+    edge [fontname="Arial"];
+    
+    // Main components
+    Main [label="Main", fillcolor=lightgreen];
+    App [label="SageScriptApp", fillcolor=lightgreen];
+    Config [label="AppConfig", fillcolor=lightgreen];
+    Factory [label="ServiceFactory", fillcolor=lightgreen];
+    
+    // Services
+    DBManager [label="ChromaDBManager", fillcolor=lightyellow];
+    LLMService [label="LLMService", fillcolor=lightyellow];
+    ImageService [label="ImageService", fillcolor=lightyellow];
+    
+    // Strategies
+    Strategy [label="MenuStrategy", fillcolor=lightpink];
+    GenStrategy [label="GenerateCodeStrategy", fillcolor=lightpink];
+    RevStrategy [label="ReviewCodeStrategy", fillcolor=lightpink];
+    IdxStrategy [label="IndexDirectoryStrategy", fillcolor=lightpink];
+    ExitStrategy [label="ExitStrategy", fillcolor=lightpink];
+    
+    // Commands
+    Command [label="Command", fillcolor=lightsalmon];
+    TextGenCmd [label="TextBasedCodeGenerationCommand", fillcolor=lightsalmon];
+    ImgGenCmd [label="ImageBasedCodeGenerationCommand", fillcolor=lightsalmon];
+    CodeRevCmd [label="CodeReviewCommand", fillcolor=lightsalmon];
+    DirIdxCmd [label="DirectoryIndexingCommand", fillcolor=lightsalmon];
+    
+    // Image workflow
+    ImgHandler [label="ImageWorkflowHandler", fillcolor=lightcyan];
+    
+    // Relationships
+    Main -> App;
+    App -> Config [label="uses"];
+    App -> Factory [label="uses"];
+    Factory -> DBManager [label="creates"];
+    Factory -> LLMService [label="creates"];
+    Factory -> ImageService [label="creates"];
+    
+    // Strategy relationships
+    Strategy -> GenStrategy [label="extends", style=dashed];
+    Strategy -> RevStrategy [label="extends", style=dashed];
+    Strategy -> IdxStrategy [label="extends", style=dashed];
+    Strategy -> ExitStrategy [label="extends", style=dashed];
+    App -> Strategy [label="uses"];
+    
+    // Command relationships
+    Command -> TextGenCmd [label="extends", style=dashed];
+    Command -> ImgGenCmd [label="extends", style=dashed];
+    Command -> CodeRevCmd [label="extends", style=dashed];
+    Command -> DirIdxCmd [label="extends", style=dashed];
+    App -> Command [label="uses"];
+    
+    // Image workflow relationship
+    App -> ImgHandler [label="uses"];
+    ImgHandler -> ImageService [label="uses"];
+    ImgHandler -> LLMService [label="uses"];
+    
+    // Service usage
+    TextGenCmd -> LLMService [label="uses"];
+    ImgGenCmd -> LLMService [label="uses"];
+    ImgGenCmd -> ImageService [label="uses"];
+    CodeRevCmd -> DBManager [label="uses"];
+    CodeRevCmd -> LLMService [label="uses"];
+    DirIdxCmd -> DBManager [label="uses"];
+    
+    // Data flow
+    subgraph cluster_data_flow {
+        style=filled;
+        color=lightgrey;
+        node [style=filled,color=white];
+        label = "Data Flow";
+        
+        UserInput [label="User Input", shape=ellipse];
+        ImageData [label="Image Data", shape=ellipse];
+        StructuredData [label="Structured Data", shape=ellipse];
+        CodeOutput [label="Generated Code", shape=ellipse];
+        ReviewOutput [label="Review Output", shape=ellipse];
+        
+        UserInput -> TextGenCmd;
+        ImageData -> ImgHandler;
+        ImgHandler -> StructuredData;
+        StructuredData -> ImgGenCmd;
+        TextGenCmd -> CodeOutput;
+        ImgGenCmd -> CodeOutput;
+        CodeRevCmd -> ReviewOutput;
+    }
+}

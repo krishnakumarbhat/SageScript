@@ -1,6 +1,10 @@
 # requirements.txt
-langchain-community
-ollama
-chromadb
-rich
-typer[all]
+langchain-community>=0.0.10
+ollama>=0.1.0
+chromadb>=0.4.18
+rich>=13.5.0
+typer[all]>=0.9.0
+jigsawstack>=0.1.0
+pathlib>=1.0.1
+requests>=2.31.0
+pydantic>=2.0.0
